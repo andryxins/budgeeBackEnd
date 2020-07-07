@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 const cors = require('cors');
+const passport = require('passport');
+const AuthRoutes = require('./Auth/AuthRoutes/AuthRoutes');
 
 const PORT = process.env.PORT || 8080;
 
@@ -16,10 +18,13 @@ class Server {
     this.server.use(
       morgan(':method :url :status :res[content-length] - :response-time ms'),
     );
+
+    this.server.use(passport.initialize());
+    require('./Middlewares/passport')(passport);
   }
 
   initRoutes() {
-    // this.server.use('/auth', AuthRoutes);
+    this.server.use('/auth', AuthRoutes);
   }
 
   initServer() {
@@ -48,11 +53,16 @@ class Server {
   }
 
   async start() {
-    this.initServer();
-    this.initMiddlewares();
-    this.initRoutes();
-    await this.initDb();
-    this.initListening();
+    try {
+      this.initServer();
+      this.initMiddlewares();
+      this.initRoutes();
+      await this.initDb();
+      this.initListening();
+    } catch (e) {
+      console.log(e);
+      process.exit(1);
+    }
   }
 }
 
