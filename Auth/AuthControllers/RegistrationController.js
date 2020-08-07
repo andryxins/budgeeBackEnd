@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
-const User = require('../../models/user.js');
+const UserSchema = require('../../Models/User');
+const User = require('../../User/User');
 const passwordValidation = require('../../utils/passwordValidation');
+const isLoginUnique = require('../../utils/isLoginUnique');
 const errorHandler = require('../../utils/ErrorHandler');
 
 module.exports = async (req, res) => {
@@ -13,28 +15,21 @@ module.exports = async (req, res) => {
       });
     }
 
-    const candidate = await User.findOne({ login: login }, err => {
-      if (err) {
-        res.sendStatus(500);
-        return console.log(err);
-      }
-    });
+    const isloginUniqueResault = await isLoginUnique(login);
 
-    if (candidate) {
-      return res.status(409).send('Login is already exist');
+    if (!isloginUniqueResault) {
+      return res.status(409).json({ message: 'Login is already exist' });
     }
 
     const salt = bcrypt.genSaltSync(10);
     const saltedPassword = bcrypt.hashSync(password, salt);
 
-    const newUser = new User({ login: login, password: saltedPassword });
-    return await newUser.save(null, (err, content) => {
-      if (err) {
-        res.sendStatus(500);
-        return console.log(err);
-      }
-      return res.sendStatus(201);
-    });
+    const user = new User(login, saltedPassword);
+
+    const newUser = new UserSchema(user);
+    await newUser.create(newUser);
+
+    return res.status(200).send();
   } catch (e) {
     errorHandler(res, e);
   }

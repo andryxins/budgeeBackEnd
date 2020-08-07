@@ -7,8 +7,32 @@ const user = new Schema({
   },
   password: {
     type: String,
-    reqired: true,
+    required: true,
   },
+  userTransactionCategories: [
+    {
+      transactionCategoryName: {
+        type: String,
+      },
+      transactionCategoryType: {
+        type: String,
+        enum: ['income', 'expense'],
+      },
+    },
+  ],
+  transactions: [
+    {
+      transactionCategory: Schema.Types.ObjectId,
+      transactionType: {
+        type: String,
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+      },
+    },
+  ],
 });
 
 module.exports = model('user', user);
